@@ -1,0 +1,12 @@
+# Edge Functions validate credentials themselves (register/login are public,
+# `me` verifies the bearer token with Supabase Auth), so gateway JWT
+# verification is disabled for all three. This also keeps them working with
+# the newer asymmetric JWT signing keys.
+[functions.register]
+verify_jwt = false
+
+[functions.login]
+verify_jwt = false
+
+[functions.me]
+verify_jwt = false
