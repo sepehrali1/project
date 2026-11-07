@@ -1,18 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+export const SUPABASE_URL =
+  "https://uusqaionrmbnanztoxco.supabase.co";
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error(
-    "VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY تنظیم نشده‌اند (فایل .env یا Environment Variables هاست)."
-  );
-}
+export const SUPABASE_ANON_KEY =
+  "sb_publishable_vp1lupt6hDJ_p0Wj7wu7jw_nLfhcgyA";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false,
-  },
-});
+export const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+    },
+  }
+);
