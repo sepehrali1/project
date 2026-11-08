@@ -1,14 +1,31 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "authorization, apikey, content-type, x-client-info",
-  "Access-Control-Max-Age": "86400",
+const allowedOrigins = [
+  "https://sepehrali1-project-i-cc8b.bolt.host",
+  "https://stackblitz.com",
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin =
+    origin && allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[0];
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
 };
 
-const json = (body: unknown, status: number) =>
+const json = (
+  body: unknown,
+  status: number,
+  corsHeaders: Record<string, string>,
+) =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -22,6 +39,8 @@ const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 const encoder = new TextEncoder();
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req.headers.get("Origin"));
+
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -30,7 +49,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+    return json({ error: "Method not allowed" }, 405, corsHeaders);
   }
 
   let payload: unknown;
@@ -38,7 +57,11 @@ Deno.serve(async (req: Request) => {
   try {
     payload = await req.json();
   } catch {
-    return json({ error: "Request body must be valid JSON" }, 400);
+    return json(
+      { error: "Request body must be valid JSON" },
+      400,
+      corsHeaders,
+    );
   }
 
   const input =
@@ -89,13 +112,13 @@ Deno.serve(async (req: Request) => {
         fields,
       },
       400,
+      corsHeaders,
     );
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get(
-    "SUPABASE_SERVICE_ROLE_KEY",
-  );
+  const serviceRoleKey =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     console.error("Missing Supabase environment configuration");
@@ -103,25 +126,24 @@ Deno.serve(async (req: Request) => {
     return json(
       { error: "ثبت‌نام موقتاً در دسترس نیست." },
       500,
+      corsHeaders,
     );
   }
 
-  const admin = createClient(
-    supabaseUrl,
-    serviceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
     },
-  );
+  });
 
   try {
-    const { data: available, error: availabilityError } =
-      await admin.rpc("is_username_available", {
-        p_username: username,
-      });
+    const {
+      data: available,
+      error: availabilityError,
+    } = await admin.rpc("is_username_available", {
+      p_username: username,
+    });
 
     if (availabilityError) {
       console.error(
@@ -132,6 +154,7 @@ Deno.serve(async (req: Request) => {
       return json(
         { error: "بررسی نام کاربری ناموفق بود." },
         500,
+        corsHeaders,
       );
     }
 
@@ -144,18 +167,21 @@ Deno.serve(async (req: Request) => {
           },
         },
         409,
+        corsHeaders,
       );
     }
 
     const requireConfirmation =
       Deno.env.get("REQUIRE_EMAIL_CONFIRMATION") === "true";
 
-    const { data: created, error: createError } =
-      await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: !requireConfirmation,
-      });
+    const {
+      data: created,
+      error: createError,
+    } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: !requireConfirmation,
+    });
 
     if (createError || !created?.user) {
       if (createError?.code === "email_exists") {
@@ -167,6 +193,7 @@ Deno.serve(async (req: Request) => {
             },
           },
           409,
+          corsHeaders,
         );
       }
 
@@ -179,16 +206,19 @@ Deno.serve(async (req: Request) => {
       return json(
         { error: "ساخت حساب ناموفق بود. دوباره تلاش کنید." },
         500,
+        corsHeaders,
       );
     }
 
     const userId = created.user.id;
 
-    const { data: role, error: profileError } =
-      await admin.rpc("register_profile", {
-        p_user_id: userId,
-        p_username: username,
-      });
+    const {
+      data: role,
+      error: profileError,
+    } = await admin.rpc("register_profile", {
+      p_user_id: userId,
+      p_username: username,
+    });
 
     if (profileError) {
       const { error: cleanupError } =
@@ -214,6 +244,7 @@ Deno.serve(async (req: Request) => {
             },
           },
           409,
+          corsHeaders,
         );
       }
 
@@ -226,6 +257,7 @@ Deno.serve(async (req: Request) => {
       return json(
         { error: "ساخت حساب ناموفق بود. دوباره تلاش کنید." },
         500,
+        corsHeaders,
       );
     }
 
@@ -240,6 +272,7 @@ Deno.serve(async (req: Request) => {
         email_confirmation_required: requireConfirmation,
       },
       201,
+      corsHeaders,
     );
   } catch (err) {
     console.error("Registration failed", err);
@@ -247,6 +280,7 @@ Deno.serve(async (req: Request) => {
     return json(
       { error: "ساخت حساب ناموفق بود. دوباره تلاش کنید." },
       500,
+      corsHeaders,
     );
   }
 });
