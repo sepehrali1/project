@@ -1,29 +1,20 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
-
-const json = (body: unknown, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+import { corsHeadersFor, jsonResponse as json } from "../_shared/http.ts";
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = corsHeadersFor(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
   if (req.method !== "GET") {
-    return json({ error: "Method not allowed" }, 405);
+    return json({ error: "Method not allowed" }, 405, corsHeaders);
   }
 
   try {
     const authorization = req.headers.get("Authorization");
     if (!authorization?.startsWith("Bearer ")) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ error: "Unauthorized" }, 401, corsHeaders);
     }
     const token = authorization.slice(7);
 
@@ -31,7 +22,7 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("Missing Supabase environment configuration");
-      return json({ error: "Server misconfigured" }, 500);
+      return json({ error: "Server misconfigured" }, 500, corsHeaders);
     }
 
     const admin = createClient(supabaseUrl, serviceRoleKey, {
@@ -41,7 +32,7 @@ Deno.serve(async (req: Request) => {
     // Validates the JWT against Supabase Auth (signature, expiry, revocation).
     const { data: authData, error: authError } = await admin.auth.getUser(token);
     if (authError || !authData.user) {
-      return json({ error: "نشست شما منقضی شده است." }, 401);
+      return json({ error: "نشست شما منقضی شده است." }, 401, corsHeaders);
     }
 
     const { data: profile, error: profileError } = await admin
@@ -51,7 +42,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (profileError || !profile) {
-      return json({ error: "پروفایل کاربر پیدا نشد." }, 404);
+      return json({ error: "پروفایل کاربر پیدا نشد." }, 404, corsHeaders);
     }
 
     return json(
@@ -67,9 +58,11 @@ Deno.serve(async (req: Request) => {
         },
       },
       200,
+      corsHeaders,
     );
   } catch (error) {
     console.error("Me function failed:", error);
-    return json({ error: "خطای داخلی سرور" }, 500);
+    return json({ error: "خطای داخلی سرور" }, 500, corsHeaders);
   }
 });
+

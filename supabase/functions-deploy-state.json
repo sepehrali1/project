@@ -1,0 +1,17 @@
+{
+  "projectId": "72744866",
+  "functions": {
+    "login": {
+      "hasChanged": false,
+      "hash": "de62e10c65982873d366dc12469fc838353cd40c8a49a9cab1400472939962332d2c5531c98c8c67a0f8e6c158dcc74c086a02dc69ace38900a06315ea688a57"
+    },
+    "me": {
+      "hasChanged": false,
+      "hash": "cb951797e3dc4e838ef01d7d247aa740deb60004fef795591ff7fb17f89f981f2d2c5531c98c8c67a0f8e6c158dcc74c086a02dc69ace38900a06315ea688a57"
+    },
+    "register": {
+      "hasChanged": false,
+      "hash": "c8e78b170937de86ed98c200b07bcb9ac25f3c2237c4799b55ccce9c1e7e71692d2c5531c98c8c67a0f8e6c158dcc74c086a02dc69ace38900a06315ea688a57"
+    }
+  }
+}

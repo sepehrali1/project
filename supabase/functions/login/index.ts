@@ -1,23 +1,16 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeadersFor, jsonResponse as json } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const json = (body: unknown, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+const INVALID_CREDENTIALS = "نام کاربری / ایمیل یا رمز عبور اشتباه است.";
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = corsHeadersFor(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
   if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+    return json({ error: "Method not allowed" }, 405, corsHeaders);
   }
 
   try {
@@ -25,13 +18,21 @@ Deno.serve(async (req: Request) => {
     try {
       body = await req.json();
     } catch {
-      return json({ error: "Request body must be valid JSON" }, 400);
+      return json({ error: "Request body must be valid JSON" }, 400, corsHeaders);
     }
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+
+    const identifier = typeof body.identifier === "string" ? body.identifier.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
 
-    if (!email || !password) {
-      return json({ error: "ایمیل و رمز عبور الزامی است." }, 400);
+    if (!identifier || !password) {
+      return json(
+        {
+          error: "نام کاربری یا ایمیل و رمز عبور الزامی است.",
+          fields: { identifier: "نام کاربری یا ایمیل را وارد کنید.", password: "رمز عبور را وارد کنید." },
+        },
+        400,
+        corsHeaders,
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -39,7 +40,7 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       console.error("Missing Supabase environment configuration");
-      return json({ error: "ورود موقتاً در دسترس نیست." }, 500);
+      return json({ error: "ورود موقتاً در دسترس نیست." }, 500, corsHeaders);
     }
 
     const auth = createClient(supabaseUrl, anonKey, {
@@ -49,13 +50,36 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    let email: string;
+    if (identifier.includes("@")) {
+      email = identifier.toLowerCase();
+    } else {
+      const { data: profile, error: lookupError } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("username", identifier.toLowerCase())
+        .maybeSingle();
+      if (lookupError) {
+        console.error("Username lookup failed", lookupError.code);
+        return json({ error: INVALID_CREDENTIALS }, 401, corsHeaders);
+      }
+      if (!profile) {
+        return json({ error: INVALID_CREDENTIALS }, 401, corsHeaders);
+      }
+      const { data: authUser, error: authUserError } = await admin.auth.admin.getUserById(profile.id);
+      if (authUserError || !authUser.user?.email) {
+        return json({ error: INVALID_CREDENTIALS }, 401, corsHeaders);
+      }
+      email = authUser.user.email;
+    }
+
     const { data, error } = await auth.auth.signInWithPassword({ email, password });
 
     if (error || !data.user || !data.session) {
       if (error?.code === "email_not_confirmed") {
-        return json({ error: "ایمیل شما هنوز تأیید نشده است. لینک ارسال‌شده را بزنید." }, 403);
+        return json({ error: "ایمیل شما هنوز تأیید نشده است. لینک ارسال‌شده را بزنید." }, 403, corsHeaders);
       }
-      return json({ error: "ایمیل یا رمز عبور اشتباه است." }, 401);
+      return json({ error: INVALID_CREDENTIALS }, 401, corsHeaders);
     }
 
     const { data: profile, error: profileError } = await admin
@@ -65,12 +89,13 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (profileError || !profile) {
-      return json({ error: "پروفایل کاربر پیدا نشد." }, 404);
+      return json({ error: "پروفایل کاربر پیدا نشد." }, 404, corsHeaders);
     }
 
     if (profile.banned) {
       await admin.auth.admin.signOut(data.session.access_token).catch(() => undefined);
-      return json({ error: "حساب شما مسدود شده است." + (profile.ban_reason ? " دلیل: " + profile.ban_reason : "") }, 403);
+      const reason = profile.ban_reason ? ` دلیل: ${profile.ban_reason}` : "";
+      return json({ error: `حساب شما مسدود شده است.${reason}` }, 403, corsHeaders);
     }
 
     return json(
@@ -89,9 +114,11 @@ Deno.serve(async (req: Request) => {
         },
       },
       200,
+      corsHeaders,
     );
   } catch (error) {
     console.error("Login failed:", error);
-    return json({ error: "خطای داخلی سرور" }, 500);
+    return json({ error: "خطای داخلی سرور" }, 500, corsHeaders);
   }
 });
+

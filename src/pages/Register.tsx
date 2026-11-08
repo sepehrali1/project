@@ -11,6 +11,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -27,6 +28,10 @@ export default function Register() {
     }
     if (password.length < 8) {
       setError("رمز عبور باید حداقل ۸ کاراکتر باشد.");
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError("رمز عبور و تکرار آن یکسان نیستند.");
       return;
     }
     setSubmitting(true);
@@ -114,6 +119,24 @@ export default function Register() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={8}
+                  maxLength={72}
+                  autoComplete="new-password"
+                  dir="ltr"
+                />
+              </div>
+            </label>
+
+            <label className="form-field">
+              <span>تکرار رمز عبور</span>
+              <div className="input-wrap">
+                <Lock size={16} />
+                <input
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
                   placeholder="••••••••"
                   required
                   minLength={8}

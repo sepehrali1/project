@@ -14,7 +14,7 @@ import type { AuthUser, LoginResponse, MeResponse, RegisterResponse } from "../t
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<{ needsEmailConfirmation: boolean }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -72,10 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (identifier: string, password: string) => {
     const res = await callFunction<LoginResponse>("login", {
       method: "POST",
-      body: { email, password },
+      body: { identifier, password },
       authenticated: false,
     });
     // Hand the tokens to the Supabase client so database / storage calls use the same session

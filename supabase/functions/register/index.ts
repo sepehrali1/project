@@ -1,49 +1,16 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const allowedOrigins = [
-  "https://sepehrali1-project-i-cc8b.bolt.host",
-  "https://stackblitz.com",
-];
-
-const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin =
-    origin && allowedOrigins.includes(origin)
-      ? origin
-      : allowedOrigins[0];
-
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers":
-      "authorization, apikey, content-type, x-client-info",
-    "Access-Control-Max-Age": "86400",
-    "Vary": "Origin",
-  };
-};
-
-const json = (
-  body: unknown,
-  status: number,
-  corsHeaders: Record<string, string>,
-) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
-  });
+import { corsHeadersFor, jsonResponse as json } from "../_shared/http.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 const encoder = new TextEncoder();
 
 Deno.serve(async (req: Request) => {
-  const corsHeaders = getCorsHeaders(req.headers.get("Origin"));
+  const corsHeaders = corsHeadersFor(req);
 
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      status: 204,
+      status: 200,
       headers: corsHeaders,
     });
   }
@@ -193,6 +160,19 @@ Deno.serve(async (req: Request) => {
             },
           },
           409,
+          corsHeaders,
+        );
+      }
+
+      if (createError?.code === "weak_password") {
+        return json(
+          {
+            error: "این رمز عبور خیلی رایج است. رمز قوی‌تری انتخاب کنید.",
+            fields: {
+              password: "این رمز عبور خیلی رایج است. رمز قوی‌تری انتخاب کنید.",
+            },
+          },
+          400,
           corsHeaders,
         );
       }

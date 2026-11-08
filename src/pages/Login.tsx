@@ -7,7 +7,7 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +18,7 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      await login(email, password);
+      await login(identifier.trim(), password);
       navigate("/");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "خطا در ورود";
@@ -49,16 +49,16 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="auth-form">
             <label className="form-field">
-              <span>ایمیل</span>
+              <span>نام کاربری یا ایمیل</span>
               <div className="input-wrap">
                 <Mail size={16} />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="sskid یا you@example.com"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                   dir="ltr"
                 />
               </div>
