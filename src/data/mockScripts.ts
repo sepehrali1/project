@@ -63,7 +63,7 @@ export const featuredScripts: Script[] = [
     likes: 431,
     views: 12700,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    thumbnailGradient: "linear-gradient(135deg, #a855f7, #7c3aed)",
+    thumbnailGradient: "linear-gradient(135deg, #22e4ff, #0ea5e9)",
     game: "Universal",
   },
   {

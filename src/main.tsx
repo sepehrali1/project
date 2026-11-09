@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import "./style.css";
+import "./styles/theme-glass.css";
 
 document.documentElement.setAttribute("lang", "fa");
 document.documentElement.setAttribute("dir", "rtl");

@@ -84,7 +84,7 @@ export default function Owner() {
                 <tr key={u.id}>
                   <td>
                     {u.username}
-                    {u.id === me?.id && <span style={{ color: "#a855f7", marginInlineStart: 8 }}>(شما)</span>}
+                    {u.id === me?.id && <span style={{ color: "var(--color-primary)", marginInlineStart: 8 }}>(شما)</span>}
                   </td>
                   <td dir="ltr">{u.email}</td>
                   <td>
