@@ -13,6 +13,7 @@ const NAV_LINKS: NavItem[] = [
   { to: "/", label: "خانه", end: true },
   { to: "/scripts", label: "اسکریپت‌ها" },
   { to: "/scripts?sort=trending", label: "پرطرفدار" },
+  { to: "/leaderboard", label: "جدول برترین‌ها" },
 ];
 
 export default function Navbar() {
@@ -47,6 +48,11 @@ export default function Navbar() {
           {user && (
             <NavLink to="/my-scripts" onClick={close}>
               اسکریپت‌های من
+            </NavLink>
+          )}
+          {user && (
+            <NavLink to="/messages" onClick={close}>
+              پیام‌ها
             </NavLink>
           )}
           {isAdmin && (

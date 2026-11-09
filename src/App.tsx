@@ -13,8 +13,10 @@ import NewScript from "./pages/NewScript";
 import MyScripts from "./pages/MyScripts";
 import Admin from "./pages/Admin";
 import Owner from "./pages/Owner";
+import Leaderboard from "./pages/Leaderboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import LegalPage from "./pages/LegalPage";
+import Messages from "./pages/Messages";
 
 export default function App() {
   return (
@@ -34,9 +36,12 @@ export default function App() {
             }
           />
           <Route path="/scripts" element={<Scripts />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/scripts/new" element={<ProtectedRoute><NewScript /></ProtectedRoute>} />
           <Route path="/scripts/:id/edit" element={<ProtectedRoute><NewScript /></ProtectedRoute>} />
           <Route path="/scripts/:id" element={<ScriptDetail />} />
+          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+          <Route path="/messages/:userId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
           <Route path="/terms" element={<LegalPage kind="terms" />} />
           <Route path="/privacy" element={<LegalPage kind="privacy" />} />
           <Route

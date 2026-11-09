@@ -260,6 +260,15 @@ export default function ScriptDetail() {
               <span className="dot-sep">•</span>
               <Clock size={14} />
               <span>{timeAgo(script.created_at)}</span>
+              {user && !script.is_mine && script.author.id && (
+                <Link
+                  to={`/messages/${script.author.id}`}
+                  state={{ username: script.author.username }}
+                  className="btn btn-outline btn-sm author-message-link"
+                >
+                  پیام خصوصی
+                </Link>
+              )}
             </div>
           </div>
 

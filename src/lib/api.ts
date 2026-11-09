@@ -70,6 +70,9 @@ const KNOWN_ERRORS: Record<string, string> = {
   reason_required: "دلیل را بنویسید (حداقل ۳ کاراکتر).",
   cannot_change_self: "نمی‌توانید نقش خودتان را تغییر دهید.",
   invalid_role: "نقش نامعتبر است.",
+  invalid_message: "پیام باید بین ۱ تا ۲۰۰۰ کاراکتر باشد.",
+  invalid_target: "امکان ارسال پیام به این کاربر وجود ندارد.",
+  rate_limited: "پیام‌های زیادی ارسال کرده‌اید. کمی صبر کنید.",
 };
 
 /** Turns Supabase / PostgREST errors into a readable Persian message. */
